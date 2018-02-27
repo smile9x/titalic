@@ -166,6 +166,8 @@ test_df = test_df.drop(['Name'], axis=1)
 # convert sex feature into numeric
 genders = {"male": 0, "female": 1}
 data = [train_df, test_df]
+for dataset in data:
+    dataset['Sex'] = dataset['Sex'].map(genders)
 
 #Ticket:
 train_df['Ticket'].describe()
@@ -192,3 +194,59 @@ for dataset in data:
     dataset.loc[(dataset['Age'] > 33) & (dataset['Age'] <= 40), 'Age'] = 5
     dataset.loc[(dataset['Age'] > 40) & (dataset['Age'] <= 66), 'Age'] = 6
     dataset.loc[ dataset['Age'] > 66, 'Age'] = 6
+    
+# Let's see how it's distributed
+train_df['Age'].value_counts()
+
+train_df.head(10)
+
+#
+data = [train_df, test_df]
+for dataset in data:
+    dataset.loc[ dataset['Fare'] <= 7.91, 'Fare'] = 0
+    dataset.loc[ (dataset['Fare'] > 7.91) & (dataset['Fare'] <= 14.454), 'Fare'] = 1
+    dataset.loc[(dataset['Fare'] > 14.454) & (dataset['Fare'] <= 31), 'Fare'] = 2
+    dataset.loc[(dataset['Fare'] > 31) & (dataset['Fare'] <= 99), 'Fare'] = 3
+    dataset.loc[(dataset['Fare'] > 99) & (dataset['Fare'] <= 250), 'Fare'] = 4
+    dataset.loc[ dataset['Fare'] > 250, 'Fare'] = 5
+    dataset['Fare'] = dataset['Fare'].astype(int)
+    
+# creating new features
+data = [train_df, test_df]
+for dataset in data:
+    dataset['Age_Class'] = dataset['Age'] * dataset['Pclass']
+    
+#Fare per Person
+for dataset in data:
+    dataset['Fare_Per_Person'] = dataset['Fare']/(dataset['relatives']+1)
+    dataset['Fare_Per_Person'] = dataset['Fare_Per_Person'].astype(int)
+    
+# Let's take a last look at the training set, before we start training the models
+train_df.head(20)
+
+
+#Building Machine Learning Models
+X_train = train_df.drop("Survived", axis=1)
+Y_train = train_df["Survived"]
+X_test = test_df.drop("PassengerId", axis=1).copy()
+
+#stochastic gradient descent (SGD) Learning
+sgd = linear_model.SGDClassifier(max_iter=5, tol=None)
+sgd.fit(X_train, Y_train)
+Y_pred = sgd.predict(X_test)
+
+sgd.score(X_train, Y_train)
+
+acc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)
+
+print(round(acc_sgd,2,),"%")
+
+# Random Forest
+random_forest = RandomForestClassifier(n_estimators=100)
+random_forest.fit(X_train, Y_train)
+
+Y_prediction = random_forest.predict(X_test)
+
+random_forest.score(X_train, Y_train)
+acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
+print(round(acc_random_forest,2,), "%")
